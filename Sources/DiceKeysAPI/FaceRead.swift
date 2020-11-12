@@ -17,40 +17,67 @@ struct Line: Decodable {
     let end: Point
 }
 
-struct UndoverlineJson: Decodable {
+struct Undoverline: Decodable {
     let line: Line
-    let code: UInt16
-    
-    var letter: FaceLetter? {
-        get {
-            return FaceLetter.A
-        }
+    let code: UInt8
+}
+
+func decodeUnderlineCode(_ code: UInt8?) -> FaceWithUnderlineAndOverlineCode? {
+    if let c = code {
+        return underlineCodeToFaceWithUnderlineAndOverlineCode[Int(c)]
     }
+    return nil
+}
+func decodeUnderline(_ underline: Undoverline?) -> FaceWithUnderlineAndOverlineCode? {
+    return decodeUnderlineCode(underline?.code)
+}
+
+func decodeOverlineCode(_ code: UInt8?) -> FaceWithUnderlineAndOverlineCode? {
+    if let c = code {
+        return overlineCodeToFaceWithUnderlineAndOverlineCode[Int(c)]
+    }
+    return nil
+}
+func decodeOverline(_ overline: Undoverline?) -> FaceWithUnderlineAndOverlineCode? {
+    return decodeOverlineCode(overline?.code)
+}
+
+func majorityOf3<T: Equatable>(_ a: T?, _ b: T?, _ c: T?) -> T? {
+    return (a == b || a == c) ? a : (b == c) ? b : nil
 }
 
 class FaceReadJson: Decodable {
-    let underline: UndoverlineJson?;
-    let overline: UndoverlineJson?;
+    let underline: Undoverline?;
+    let overline: Undoverline?;
     let orientationAsLowercaseLetterTrbl: FaceOrientationLetterTrbl?;
     let ocrLetterCharsFromMostToLeastLikely: String;
     let ocrDigitCharsFromMostToLeastLikely: String;
     let center: Point;
     
-    var letter: FaceLetter { get {
-        // FIXME
-        return FaceLetter.A
+    var letter: FaceLetter? { get {
+        return majorityOf3(
+            FaceLetter(rawValue: String(ocrLetterCharsFromMostToLeastLikely.prefix(1))),
+            decodeUnderline(underline)?.letter,
+            decodeOverline(overline)?.letter
+        )
     }}
 
-    var digit: FaceDigit { get {
-        // FIXME
-        return FaceDigit.D1
+    var digit: FaceDigit? { get {
+        return majorityOf3(
+            FaceDigit(rawValue: String(ocrDigitCharsFromMostToLeastLikely.prefix(1))),
+            decodeUnderline(underline)?.digit,
+            decodeOverline(overline)?.digit
+        )
     }}
     
 
-    func toFace() -> Face {
-        return Face(
-            letter: letter,
-            digit: digit,
-            orientationAsLowercaseLetterTrbl: orientationAsLowercaseLetterTrbl ?? FaceOrientationLetterTrbl.Top)
+    func toFace() -> Face? {
+        if let letter = self.letter, let digit = self.digit {
+            return Face(
+                letter: letter,
+                digit: digit,
+                orientationAsLowercaseLetterTrbl: orientationAsLowercaseLetterTrbl ?? FaceOrientationLetterTrbl.Top)
+        }
+        return nil;
     }
 }
