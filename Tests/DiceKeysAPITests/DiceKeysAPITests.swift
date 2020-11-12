@@ -6,7 +6,7 @@ final class DiceKeysAPITests: XCTestCase {
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct
         // results.
-        XCTAssertEqual(DiceKeysAPI().text, "Hello, World!")
+//        XCTAssertEqual(DiceKeysAPI().text, "Hello, World!")
     }
 
     static var allTests = [
