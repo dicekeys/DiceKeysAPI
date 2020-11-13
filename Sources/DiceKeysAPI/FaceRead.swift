@@ -46,7 +46,7 @@ func majorityOf3<T: Equatable>(_ a: T?, _ b: T?, _ c: T?) -> T? {
     return (a == b || a == c) ? a : (b == c) ? b : nil
 }
 
-class FaceReadJson: Decodable {
+class FaceRead: Decodable {
     let underline: Undoverline?;
     let overline: Undoverline?;
     let orientationAsLowercaseLetterTrbl: FaceOrientationLetterTrbl?;
@@ -70,7 +70,6 @@ class FaceReadJson: Decodable {
         )
     }}
     
-
     func toFace() -> Face? {
         if let letter = self.letter, let digit = self.digit {
             return Face(
@@ -80,4 +79,13 @@ class FaceReadJson: Decodable {
         }
         return nil;
     }
+    
+    static func fromJson(_ json: Data) -> [FaceRead]? {
+        return try! JSONDecoder().decode([FaceRead].self, from: json)
+    }
+
+    static func fromJson(_ json: String) -> [FaceRead]? {
+        return fromJson(json.data(using: .utf8)!)
+    }
+    
 }
