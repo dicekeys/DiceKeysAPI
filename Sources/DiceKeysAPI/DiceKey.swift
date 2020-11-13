@@ -28,7 +28,7 @@ let clockwise90DegreeRotationIndexesFor5x5Grid = [
 class DiceKey {
     let faces: [Face]
     
-    let faceTuple: FaceTuple { get {
+    var faceTuple: FaceTuple { get {
         return (
             faces[0], faces[1], faces[2], faces[3], faces[4],
             faces[5], faces[6], faces[7], faces[8], faces[9],
@@ -38,7 +38,7 @@ class DiceKey {
         )
     }}
 
-    init(faces: [Face]) {
+    init(_ faces: [Face]) {
         precondition(faces.count == 25)
         self.faces = faces;
     }
@@ -70,30 +70,31 @@ class DiceKey {
     func toHumanReadableForm(includeOrientations: Bool) -> String {
         return faces.map() { face -> String in
             face.letter.rawValue +
-            face.digit +
-            (includeOrientations ? face.orientationAsLowercaseLetterTrbl : "")
+            face.digit.rawValue +
+                (includeOrientations ? face.orientationAsLowercaseLetterTrbl.rawValue : "")
         }.joined(separator: "") as String
     }
     
     func rotatedToCanonicalForm(
-      includeOrientations: boolean
+      includeOrientations: Bool
     ) -> DiceKey {
         var candidateDiceKey = self
-        var diceKeyWithEarliestHumanReadableForm = currentDiceKey
-        var earliestHumanReadableForm = diceKeyWithEarliestHumanReadableForm.toHumanReadableForm(includeOrientations)
-        for rotation in 1...3 {
+        var diceKeyWithEarliestHumanReadableForm = candidateDiceKey
+        var earliestHumanReadableForm = diceKeyWithEarliestHumanReadableForm.toHumanReadableForm(includeOrientations: includeOrientations)
+        for _ in 1...3 {
             candidateDiceKey = candidateDiceKey.rotatedClockwise90Degrees()
-            let humanReadableForm = candidateDiceKey.toHumanReadableForm(includeOrientations)
+            let humanReadableForm = candidateDiceKey.toHumanReadableForm(includeOrientations: includeOrientations)
             if (humanReadableForm < earliestHumanReadableForm) {
                 earliestHumanReadableForm = humanReadableForm
-                diceKeyWithEarliestHumanReadableForm = currentDiceKey
+                diceKeyWithEarliestHumanReadableForm = candidateDiceKey
             }
         }
-        return rotationIndependentDiceKey
+        return diceKeyWithEarliestHumanReadableForm
     }
     
-    func toSeed(includeOrientations: boolean) {
-        return rotatedToCanonicalForm(includeOrientations).toHumanReadableForm(includeOrientations)
+    func toSeed(includeOrientations: Bool) -> String {
+        return rotatedToCanonicalForm(includeOrientations: includeOrientations)
+            .toHumanReadableForm(includeOrientations: includeOrientations)
     }
     
 }
