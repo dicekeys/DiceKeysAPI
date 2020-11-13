@@ -23,11 +23,12 @@
 // that reads the constants you need from this file.
 //
 
-enum FaceLetter: String, Codable {
+enum FaceLetter: String, Codable, CaseIterable {
   case A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, R, S, T, U, V, W, X, Y, Z
 }
+let FaceLetters = Array(FaceLetter.allCases)
 
-enum FaceDigit: String, Codable {
+enum FaceDigit: String, Codable, CaseIterable {
   case _1 = "1"
   case _2 = "2"
   case _3 = "3"
@@ -35,6 +36,7 @@ enum FaceDigit: String, Codable {
   case _5 = "5"
   case _6 = "6"
 }
+let FaceDigits = Array(FaceDigit.allCases)
 
 let faceLetterIndexes: Dictionary<FaceLetter, UInt8> = [
     FaceLetter.A: 0,
@@ -83,12 +85,13 @@ let faceDigitValues: Dictionary<FaceDigit, UInt8> = [
 ]
 
 
-enum FaceOrientationLetterTrbl: String, Codable {
+enum FaceOrientationLetterTrbl: String, Codable, CaseIterable {
   case Top = "t"
   case Right = "r"
   case Bottom = "b"
   case Left = "l"
 }
+let FaceOrientationLettersTrbl = Array(FaceOrientationLetterTrbl.allCases)
 
 let NumberOfDotsInUndoverline: Int = 11;
 let MinNumberOfBlackDotsInUndoverline: Int = 4;

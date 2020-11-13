@@ -25,6 +25,13 @@ let clockwise90DegreeRotationIndexesFor5x5Grid = [
     24, 19, 14, 9, 4
 ]
 
+
+enum IllegalCharacterError: Error {
+    case inLetter(position: Int)
+    case inDigit(position: Int)
+    case inOrientation(position: Int)
+}
+
 class DiceKey {
     let faces: [Face]
     
@@ -41,6 +48,43 @@ class DiceKey {
     init(_ faces: [Face]) {
         precondition(faces.count == 25)
         self.faces = faces;
+    }
+    
+    static func createFromRandom() -> DiceKey {
+        return DiceKey( (1...25).map() { _ -> Face in
+            return Face(
+                letter: FaceLetters[Int.random(in: 0..<(FaceLetters.count))],
+                digit: FaceDigits[Int.random(in: 0..<(FaceDigits.count))],
+                orientationAsLowercaseLetterTrbl: FaceOrientationLettersTrbl[Int.random(in: 0..<(FaceOrientationLettersTrbl.count))]
+            )
+        })
+    }
+    
+    static func createFrom(humanReadableForm: String) throws -> DiceKey {
+        precondition(humanReadableForm.count == 50 || humanReadableForm.count == 75)
+        let bytesPerFace = humanReadableForm.count == 75 ? 3 : 2
+        return DiceKey( try (0...24).map() { index -> Face in
+            let letterIndex = bytesPerFace * index
+            let letter = FaceLetter(rawValue: String(humanReadableForm[humanReadableForm.index(humanReadableForm.startIndex, offsetBy: letterIndex)]))
+            if (letter == nil) {
+                throw IllegalCharacterError.inLetter(position: letterIndex)
+            }
+            let digit = FaceDigit(rawValue: String(humanReadableForm[humanReadableForm.index(humanReadableForm.startIndex, offsetBy:letterIndex+1)]))
+            if (digit == nil) {
+                throw IllegalCharacterError.inDigit(position: letterIndex+1)
+            }
+            let orientationAsLowercaseLetterTrbl = bytesPerFace == 3 ? FaceOrientationLetterTrbl(rawValue: String(humanReadableForm[humanReadableForm.index(humanReadableForm.startIndex, offsetBy:letterIndex+2)])) :
+                FaceOrientationLetterTrbl.Top
+            if (orientationAsLowercaseLetterTrbl == nil) {
+                throw IllegalCharacterError.inOrientation(position: letterIndex+2)
+            }
+            return Face(
+                letter: letter!,
+                digit: digit!,
+                orientationAsLowercaseLetterTrbl: orientationAsLowercaseLetterTrbl!
+            )
+        })
+        
     }
     
     func withoutOrientations() -> DiceKey {
