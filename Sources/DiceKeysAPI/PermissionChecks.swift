@@ -7,24 +7,23 @@
 
 import Foundation
 
-class ClientNotAuthorizedException: Error {}
 
 let DefaultPermittedPathPrefix = "/--derived-secret-api--/"
 let DefaultPathRequirement = DefaultPermittedPathPrefix + "*"
 
+
 class RequestContext {
     let validatedByAuthToken: Bool
-//    let url: URL
     let host: String
     let path: String
 
-    init (url: URL, command: String, validatedByAuthToken: Bool = false) {
+    init (url: URL, validatedByAuthToken: Bool = false) {
         // self.url = url
         self.host = url.host ?? ""
         self.path = url.path
         self.validatedByAuthToken = validatedByAuthToken
     }
-
+    
     private func satisfiesPathRequirement(of pathRequirement: String) -> Bool {
         let pathExpected = (pathRequirement.hasPrefix("/")) ? pathRequirement :
             // Paths must start with a "/".  If the path requirement didn't start with a "/",
@@ -67,7 +66,8 @@ class RequestContext {
     }
     
     func satisfiesAuthenticationRequirements(
-        of requirements: AuthenticationRequirements
+        of requirements: AuthenticationRequirements,
+        allowNullRequirement: Bool = false
     ) -> Bool {
         if (requirements.requireAuthenticationHandshake == true && !validatedByAuthToken) {
             // Auth token required but not present
@@ -87,17 +87,18 @@ class RequestContext {
                 }
             }
         } else {
-            return true // FIXME -- only if command allows no host, such as getting a public key
+            return allowNullRequirement
         }
     }
     
-    func throwUnlessSatisfiesAuthenticationRequirements(
-        of requirements: AuthenticationRequirements
-    ) throws -> Void {
-        if (!satisfiesAuthenticationRequirements(of: requirements)) {
-            throw ClientNotAuthorizedException();
-        }
-    }
+//    func throwUnlessSatisfiesAuthenticationRequirements(
+//        of requirements: AuthenticationRequirements,
+//        allowNullRequirement: Bool = false
+//    ) throws -> Void {
+//        if (!satisfiesAuthenticationRequirements(of: requirements, allowNullRequirement: allowNullRequirement)) {
+//            throw ClientNotAuthorizedException();
+//        }
+//    }
     
 }
 
