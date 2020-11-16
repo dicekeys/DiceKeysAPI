@@ -31,12 +31,14 @@ enum AuthenticationRequirementIn {
 }
 
 enum RequestException: Error {
-    case NotImplemented
-    case InvalidDerivationOptionsJson
-    case InvalidPackagedSealedMessage
-    case ParameterNotFound(String)
     case ClientNotAuthorized(AuthenticationRequirementIn)
     case ComamndRequiresDerivationOptionsWithClientMayRetrieveKeySetToTrue
+    case NotImplemented
+    case InvalidCommand
+    case InvalidDerivationOptionsJson
+    case InvalidPackagedSealedMessage
+    case FailedToParseReplyTo(String)
+    case ParameterNotFound(String)
 }
 
 
@@ -319,3 +321,50 @@ class ApiRequestUnsealWithUnsealingKey: ApiRequestUnseal, ApiRequestCommand {
     let allowNilEmptyDerivationOptions = true
 }
 
+/**
+ In progress
+ */
+func handleApiRequest(incomingRequestUrl: URL) throws {
+    let p = UrlParameters(url: incomingRequestUrl);
+    let replyTo = try! p.requiredField(name: "replyTo")
+    guard let replyToUrl = URL(string: replyTo) else {
+        throw RequestException.FailedToParseReplyTo(replyTo)
+    }
+    let authToken = p.optionalField(name: "authToken")
+    var validatedByAuthToken = false
+    if let authTokenNonNil = authToken {
+        // FIXME
+        if (authTokenNonNil == "FIXME") {
+            validatedByAuthToken = true
+        }
+    }
+    
+    let requestContext = RequestContext(url: replyToUrl, validatedByAuthToken: validatedByAuthToken)
+    guard let command = ApiCommand(rawValue: try! p.requiredField(name: "command")) else {
+        throw RequestException.InvalidCommand
+    }
+    switch (command) {
+    case ApiCommand.generateSignature:
+        try! ApiRequestGenerateSignature(requestContext: requestContext, unmarshaller: p).throwIfNotAuthorized()
+    case ApiCommand.getPassword:
+        try! ApiRequestGetPassword(requestContext: requestContext, unmarshaller: p).throwIfNotAuthorized()
+    case ApiCommand.getSealingKey:
+        try! ApiRequestGetSealingKey(requestContext: requestContext, unmarshaller: p).throwIfNotAuthorized()
+    case ApiCommand.getSecret:
+        try! ApiRequestGetSecret(requestContext: requestContext, unmarshaller: p).throwIfNotAuthorized()
+    case ApiCommand.getSigningKey:
+        try! ApiRequestGetSigningKey(requestContext: requestContext, unmarshaller: p).throwIfNotAuthorized()
+    case ApiCommand.getSignatureVerificationKey:
+        try! ApiRequestGetSignatureVerificationKey(requestContext: requestContext, unmarshaller: p).throwIfNotAuthorized()
+    case ApiCommand.getSymmetricKey:
+        try! ApiRequestGetSymmetricKey(requestContext: requestContext, unmarshaller: p).throwIfNotAuthorized()
+    case ApiCommand.getUnsealingKey:
+        try! ApiRequestGetUnsealingKey(requestContext: requestContext, unmarshaller: p).throwIfNotAuthorized()
+    case ApiCommand.sealWithSymmetricKey:
+        try! ApiRequestSealWithSymmetricKey(requestContext: requestContext, unmarshaller: p).throwIfNotAuthorized()
+    case ApiCommand.unsealWithSymmetricKey:
+        try! ApiRequestUnsealWithSymmetricKey(requestContext: requestContext, unmarshaller: p).throwIfNotAuthorized()
+    case ApiCommand.unsealWithUnsealingKey:
+        try! ApiRequestUnsealWithUnsealingKey(requestContext: requestContext, unmarshaller: p).throwIfNotAuthorized()
+    }
+}
